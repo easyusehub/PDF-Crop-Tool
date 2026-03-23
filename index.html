@@ -6,9 +6,14 @@
 <title>📄 PDF Crop Tool | EasyUseHub</title>
 <style>
 body, html{margin:0;padding:0;font-family:'Segoe UI',sans-serif;background:#f0f2f5;display:flex;flex-direction:column;align-items:center;}
-h1{margin:20px;}
-#pdf-container{position:relative;border:1px solid #ccc;margin-top:10px;}
-canvas{display:block;}
+h1{text-align:center;margin:20px;}
+#ad-top,#ad-middle{margin:15px 0;padding:12px;border:2px dashed #ccc;border-radius:10px;color:#999;width:90%;max-width:600px;text-align:center;}
+#upload-box{border:3px dashed #9333ea;border-radius:12px;padding:20px;text-align:center;width:90%;max-width:400px;cursor:pointer;margin:15px;}
+#upload-box:hover{background:#f5e6fa;}
+#page-selector{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:15px;}
+.thumbnail{border:1px solid #ccc;width:80px;height:100px;cursor:pointer;overflow:hidden;}
+#crop-viewer{display:none;position:relative;width:100%;max-width:600px;height:80vh;border:1px solid #ccc;margin:15px auto;touch-action:none;}
+#crop-viewer canvas{display:block;max-width:100%;height:auto;transform-origin:0 0;}
 .crop-rect{position:absolute;border:2px dashed #9333ea;background:rgba(147,51,234,0.2);}
 button{padding:10px 20px;margin:10px;border:none;border-radius:8px;background:#9333ea;color:#fff;cursor:pointer;}
 </style>
@@ -16,84 +21,124 @@ button{padding:10px 20px;margin:10px;border:none;border-radius:8px;background:#9
 <body>
 
 <h1>📄 PDF Crop Tool</h1>
-<input type="file" id="fileInput" accept="application/pdf">
-<div id="pdf-container"></div>
-<button id="crop-btn">📥 Crop & Download PDF</button>
+<div id="ad-top">Top Ad Placeholder</div>
+
+<div id="upload-box">📁 Upload PDF</div>
+<input type="file" id="fileInput" accept="application/pdf" hidden>
+
+<div id="page-selector"></div>
+
+<div id="crop-viewer">
+  <button id="back-btn">⬅ Back</button>
+  <button id="download-btn">📥 Download Cropped PDF</button>
+</div>
+
+<div id="ad-middle">Middle Ad Placeholder</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script>
+const uploadBox=document.getElementById('upload-box');
 const fileInput=document.getElementById('fileInput');
-const pdfContainer=document.getElementById('pdf-container');
-const cropBtn=document.getElementById('crop-btn');
+const pageSelector=document.getElementById('page-selector');
+const cropViewer=document.getElementById('crop-viewer');
+const backBtn=document.getElementById('back-btn');
+const downloadBtn=document.getElementById('download-btn');
 
-let pdfDoc=null,canvas=null,startX=0,startY=0,rectDiv=null,cropBox=null,scale=1;
+let pdfDoc=null, pdfBytes=null, currentPage=0, canvas=null, cropRect=null, startX=0,startY=0,scale=1;
+
+uploadBox.onclick=()=>fileInput.click();
 
 fileInput.addEventListener('change', async e=>{
   const file=e.target.files[0];
   if(!file) return;
-  const arrayBuffer=await file.arrayBuffer();
-  pdfDoc=await pdfjsLib.getDocument({data:arrayBuffer}).promise;
+  pdfBytes=await file.arrayBuffer();
+  pdfDoc=await pdfjsLib.getDocument({data:pdfBytes}).promise;
+  pageSelector.innerHTML='';
+  for(let i=1;i<=pdfDoc.numPages;i++){
+    const page = await pdfDoc.getPage(i);
+    const viewport=page.getViewport({scale:0.2});
+    const thumbCanvas=document.createElement('canvas');
+    thumbCanvas.width=viewport.width;
+    thumbCanvas.height=viewport.height;
+    await page.render({canvasContext:thumbCanvas.getContext('2d'),viewport}).promise;
+    const thumbDiv=document.createElement('div');
+    thumbDiv.className='thumbnail';
+    thumbDiv.appendChild(thumbCanvas);
+    thumbDiv.onclick=()=>openCropPage(i);
+    pageSelector.appendChild(thumbDiv);
+  }
+});
 
-  const page=await pdfDoc.getPage(1); // first page preview
+async function openCropPage(pageNum){
+  pageSelector.style.display='none';
+  cropViewer.style.display='block';
+  currentPage=pageNum;
+  const page = await pdfDoc.getPage(pageNum);
   const viewport=page.getViewport({scale:1});
-  scale = 600/viewport.width; // fit width 600px
+  scale = Math.min(600/viewport.width,1); // fit crop view
   const scaledViewport=page.getViewport({scale:scale});
 
   canvas=document.createElement('canvas');
   canvas.width=scaledViewport.width;
   canvas.height=scaledViewport.height;
   await page.render({canvasContext:canvas.getContext('2d'),viewport:scaledViewport}).promise;
-  pdfContainer.innerHTML='';
-  pdfContainer.style.width=canvas.width+'px';
-  pdfContainer.style.height=canvas.height+'px';
-  pdfContainer.appendChild(canvas);
+  cropViewer.appendChild(canvas);
 
-  // Crop rectangle
+  // crop rectangle
+  if(cropRect) cropRect.remove();
+  cropRect=document.createElement('div');
+  cropRect.className='crop-rect';
+  cropRect.style.left='50px';
+  cropRect.style.top='50px';
+  cropRect.style.width='200px';
+  cropRect.style.height='200px';
+  cropViewer.appendChild(cropRect);
+
+  let dragging=false;
   canvas.addEventListener('mousedown', e=>{
+    dragging=true;
     startX=e.offsetX; startY=e.offsetY;
-    if(rectDiv) rectDiv.remove();
-    rectDiv=document.createElement('div');
-    rectDiv.className='crop-rect';
-    rectDiv.style.left=startX+'px';
-    rectDiv.style.top=startY+'px';
-    pdfContainer.appendChild(rectDiv);
   });
   canvas.addEventListener('mousemove', e=>{
-    if(!rectDiv) return;
+    if(!dragging) return;
     let w=e.offsetX-startX; let h=e.offsetY-startY;
-    rectDiv.style.width=Math.abs(w)+'px';
-    rectDiv.style.height=Math.abs(h)+'px';
-    rectDiv.style.left=(w<0?e.offsetX:startX)+'px';
-    rectDiv.style.top=(h<0?e.offsetY:startY)+'px';
+    cropRect.style.width=Math.abs(w)+'px';
+    cropRect.style.height=Math.abs(h)+'px';
+    cropRect.style.left=(w<0?e.offsetX:startX)+'px';
+    cropRect.style.top=(h<0?e.offsetY:startY)+'px';
   });
-  canvas.addEventListener('mouseup', e=>{
-    cropBox={
-      x:parseFloat(rectDiv.style.left)/scale,
-      y:parseFloat(rectDiv.style.top)/scale,
-      width:parseFloat(rectDiv.style.width)/scale,
-      height:parseFloat(rectDiv.style.height)/scale
-    };
-  });
-});
+  canvas.addEventListener('mouseup', e=>{dragging=false;});
+}
 
-// Crop & download PDF
-cropBtn.addEventListener('click', async ()=>{
-  if(!pdfDoc || !cropBox) return alert('Select a crop area first!');
-  const fileArray = await fileInput.files[0].arrayBuffer();
-  const pdfLibDoc = await PDFLib.PDFDocument.load(fileArray);
-  const pages = pdfLibDoc.getPages();
-  const page = pages[0];
-  const {x,y,width,height} = cropBox;
-  page.setCropBox(x, page.getHeight() - y - height, width, height);
-  const pdfBytes = await pdfLibDoc.save();
-  const blob = new Blob([pdfBytes],{type:'application/pdf'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;
-  a.download=fileInput.files[0].name.replace(/\.pdf$/i,'-cropped.pdf');
+// Back to page selector
+backBtn.onclick=()=>{
+  cropViewer.style.display='none';
+  pageSelector.style.display='flex';
+  cropViewer.innerHTML='';
+  cropViewer.appendChild(backBtn);
+  cropViewer.appendChild(downloadBtn);
+}
+
+// Download cropped PDF
+downloadBtn.onclick=async()=>{
+  const pdfLibDoc = await PDFLib.PDFDocument.load(pdfBytes);
+  const page = pdfLibDoc.getPage(currentPage-1);
+  const {x,y,width,height} = {
+    x:parseFloat(cropRect.style.left)/scale,
+    y:parseFloat(cropRect.style.top)/scale,
+    width:parseFloat(cropRect.style.width)/scale,
+    height:parseFloat(cropRect.style.height)/scale
+  };
+  page.setCropBox(x,page.getHeight() - y - height,width,height);
+  const bytes = await pdfLibDoc.save();
+  const blob = new Blob([bytes],{type:'application/pdf'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download='cropped-'+fileInput.files[0].name;
   a.click();
-});
+}
 </script>
 </body>
 </html>
