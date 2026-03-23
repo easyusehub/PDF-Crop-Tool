@@ -31,7 +31,10 @@ h1{text-align:center;margin:20px;}
   display:block; width:100%; height:auto; transform-origin:0 0; will-change:transform;
 }
 .crop-rect{
-  position:absolute; border:2px dashed #9333ea; background:rgba(147,51,234,0.2);
+  position:absolute;
+  border:2px dashed #9333ea;
+  background:rgba(147,51,234,0.2);
+  touch-action:none; /* Prevent page scrolling when touching rectangle */
 }
 button{
   padding:10px 20px; margin:10px; border:none; border-radius:8px; background:#9333ea; color:#fff; cursor:pointer;
@@ -141,24 +144,38 @@ async function openCropPage(pageNum){
   cropRect.style.height='200px';
   cropViewer.appendChild(cropRect);
 
-  interact(cropRect).draggable({
-    listeners:{move(event){
-      const target=event.target;
-      const x=(parseFloat(target.getAttribute('data-x'))||0)+event.dx;
-      const y=(parseFloat(target.getAttribute('data-y'))||0)+event.dy;
-      target.style.left=x+'px';
-      target.style.top=y+'px';
-      target.setAttribute('data-x',x);
-      target.setAttribute('data-y',y);
-    }}
-  }).resizable({
-    edges:{left:true,right:true,top:true,bottom:true},
-    listeners:{move(event){
-      let {width,height}=event.rect;
-      event.target.style.width=width+'px';
-      event.target.style.height=height+'px';
-    }}
-  });
+  // Prevent touch events on cropRect from scrolling page
+  cropRect.addEventListener('touchstart', e=>e.stopPropagation());
+  cropRect.addEventListener('touchmove', e=>e.stopPropagation());
+
+  interact(cropRect)
+    .draggable({
+      listeners: {
+        move(event){
+          const target = event.target;
+          const x = (parseFloat(target.getAttribute('data-x'))||0) + event.dx;
+          const y = (parseFloat(target.getAttribute('data-y'))||0) + event.dy;
+          target.style.left = x + 'px';
+          target.style.top = y + 'px';
+          target.setAttribute('data-x', x);
+          target.setAttribute('data-y', y);
+        }
+      }
+    })
+    .resizable({
+      edges: { left:true, right:true, top:true, bottom:true },
+      listeners: {
+        move(event){
+          let { width, height } = event.rect;
+          event.target.style.width = width + 'px';
+          event.target.style.height = height + 'px';
+        }
+      },
+      modifiers: [
+        interact.modifiers.restrictEdges({ outer: cropViewer })
+      ],
+      inertia: true
+    });
 
   cropViewer.addEventListener('touchmove', e=>{
     if(e.touches.length===2){
@@ -208,7 +225,7 @@ downloadBtn.onclick=async()=>{
   a.download='cropped-'+fileInput.files[0].name;
   a.click();
 
-  // Show top toast notification
+  // Show toast notification
   toast.style.display='block';
   setTimeout(()=>{toast.style.display='none';}, 2500);
 }
