@@ -12,7 +12,7 @@
 :root { --primary: #9333ea; --bg: #f0f2f5; }
 body, html{ margin:0; padding:0; font-family:'Segoe UI',sans-serif; background:var(--bg); display:flex; flex-direction:column; align-items:center; position: relative; overflow-x: hidden;}
 
-/* --- Premium Ad Bridges (Your Signature Style) --- */
+/* --- Premium Ad Bridges --- */
 .custom-ad-bridge {
     background: linear-gradient(135deg, #1e3a8a, #2563eb); color: white; padding: 25px;
     margin: 15px 0; border-radius: 12px; cursor: pointer; width: 90%; max-width: 600px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
@@ -59,7 +59,9 @@ h1{text-align:center; margin:20px; color: #333;}
 .action-btn{
   padding:12px 24px; margin:10px; border:none; border-radius:8px; background:var(--primary); color:#fff; cursor:pointer; font-weight: bold;
 }
-#top-buttons{ display:flex; justify-content:center; gap:10px; margin-bottom: 10px; }
+.home-btn{ display:inline-block; margin:10px; padding:12px 26px; background:#444; color:#fff; text-decoration:none; font-weight:bold; border-radius: 8px; font-size: 14px; transition: 0.3s;}
+.home-btn:hover{ background: #333; }
+
 #toast{
   position:fixed; top:20px; left:50%; transform:translateX(-50%);
   background:var(--primary); color:#fff; padding:12px 25px; border-radius:8px;
@@ -83,11 +85,6 @@ h1{text-align:center; margin:20px; color: #333;}
     <span class="ad-title">🚀 Try 46+ Premium Free Web Tools!</span>
     <span class="ad-desc">All PDF TOOLS, Calculators, Age Tracker & more - 100% Free</span>
     <div class="ad-btn">Open EasyUseHub</div>
-</div>
-
-<div id="top-buttons">
-    <button class="action-btn" style="background:#444;" onclick="window.open('https://easyusehub.blogspot.com/p/free-pdf-tools-online.html','_blank')">📂 All Tools</button>
-    <button class="action-btn" style="background:#444;" onclick="window.open('https://easyusehub.blogspot.com/','_blank')">🏠 Home</button>
 </div>
 
 <div id="instructions">
@@ -118,6 +115,11 @@ h1{text-align:center; margin:20px; color: #333;}
     <div class="ad-btn" style="background: #000; color: #fff;">Open Calculators</div>
 </div>
 
+<div style="margin-bottom: 30px;">
+    <a href="https://easyusehub.blogspot.com/p/free-pdf-tools-online.html" class="home-btn">📂 All PDF Tools</a>
+    <a href="https://easyusehub.blogspot.com/" class="home-btn">🏠 Home</a>
+</div>
+
 <div id="toast">✅ PDF Cropped & Downloaded!</div>
 
 <script>
@@ -137,7 +139,6 @@ fileInput.addEventListener('change', async e=>{
   const file=e.target.files[0];
   if(!file) return;
 
-  // 20 MB Limit Check
   if(file.size > 20 * 1024 * 1024) {
       alert("❌ File is too large! Max limit is 20MB.");
       fileInput.value = "";
@@ -146,7 +147,7 @@ fileInput.addEventListener('change', async e=>{
 
   pdfBytes=await file.arrayBuffer();
   pdfDoc=await pdfjsLib.getDocument({data:pdfBytes}).promise;
-  pageSelector.innerHTML='<p style="width:100%; color:#666;">Select a page to crop:</p>';
+  pageSelector.innerHTML='<p style="width:100%; color:#666; font-weight:bold;">Select a page to crop:</p>';
   
   uploadBox.style.display = "none";
 
@@ -171,14 +172,12 @@ async function openCropPage(pageNum){
   cropViewer.style.display='block';
   currentPage=pageNum;
 
-  // Clear previous canvas if any
   const oldCanvas = cropViewer.querySelector('canvas');
   if(oldCanvas) oldCanvas.remove();
 
   const page = await pdfDoc.getPage(pageNum);
   const baseViewport = page.getViewport({scale:1});
   
-  // Responsive Scale
   const containerWidth = Math.min(window.innerWidth - 40, 800);
   scale = containerWidth / baseViewport.width;
   const viewport = page.getViewport({scale:scale});
@@ -189,7 +188,6 @@ async function openCropPage(pageNum){
   await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
   cropViewer.appendChild(canvas);
 
-  // Initialize Crop Rectangle
   if(cropRect) cropRect.remove();
   cropRect=document.createElement('div');
   cropRect.className='crop-rect';
@@ -199,10 +197,8 @@ async function openCropPage(pageNum){
   cropRect.style.top=(canvas.offsetTop + 50) + 'px';
   cropViewer.appendChild(cropRect);
 
-  // Activate Push Ad
   setTimeout(() => { document.getElementById('push-notification').classList.add('active'); }, 1500);
 
-  // Interact.js for Live Crop
   interact(cropRect)
     .draggable({
       listeners: {
@@ -255,13 +251,11 @@ downloadBtn.onclick=async()=>{
     const rect = cropRect.getBoundingClientRect();
     const canvRect = canvas.getBoundingClientRect();
 
-    // Calculate relative coordinates
     const x = (rect.left - canvRect.left) / scale;
     const y = (rect.top - canvRect.top) / scale;
     const w = rect.width / scale;
     const h = rect.height / scale;
 
-    // pdf-lib logic: y starts from bottom
     page.setCropBox(x, page.getHeight() - y - h, w, h);
     
     const bytes = await pdfLibDoc.save();
