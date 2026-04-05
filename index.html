@@ -2,154 +2,283 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>PDF Crop Free – EasyUseHub</title>
-<meta name="description" content="Crop PDF pages online for free. Adjust margins and download instantly. 100% Secure tool by EasyUseHub. Max 20 MB.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📄 PDF Crop Tool | EasyUseHub</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
 
 <style>
-body{margin:0;font-family:Arial,sans-serif;background:#0f0f0f;color:#fff;text-align:center; position: relative; overflow-x: hidden;}
-.container{max-width:900px;margin:auto;padding:25px;}
-.logo img{max-width:220px;margin:10px auto 20px;display:block;}
+:root { --primary: #9333ea; --bg: #f0f2f5; }
+body, html{ margin:0; padding:0; font-family:'Segoe UI',sans-serif; background:var(--bg); display:flex; flex-direction:column; align-items:center; position: relative; overflow-x: hidden;}
 
-/* 1. In-Page Push Ad Style */
-#push-notification {
-    position: fixed; bottom: -150px; right: 20px; width: 300px; background: #fff; border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; align-items: center; padding: 12px;
-    z-index: 10000; transition: bottom 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-    cursor: pointer; border-left: 5px solid #2563eb; color: #333;
-}
-#push-notification.active { bottom: 20px; }
-#push-notification img { width: 50px; height: 50px; border-radius: 8px; margin-right: 12px; }
-.push-text { text-align: left; flex: 1; }
-.push-text b { font-size: 14px; color: #222; display: block; }
-.push-text p { font-size: 12px; color: #666; margin: 3px 0 0 0; }
-.close-push { position: absolute; top: 5px; right: 8px; font-size: 18px; color: #aaa; cursor: pointer; }
-
-/* Ad Bridge Style */
+/* --- Premium Ad Bridges (Your Signature Style) --- */
 .custom-ad-bridge {
     background: linear-gradient(135deg, #1e3a8a, #2563eb); color: white; padding: 25px;
-    margin: 20px 0; border-radius: 12px; cursor: pointer; transition: 0.2s; text-align: center;
+    margin: 15px 0; border-radius: 12px; cursor: pointer; width: 90%; max-width: 600px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
-.custom-ad-bridge:hover { transform: scale(1.02); }
-.ad-title { font-size: 20px; font-weight: bold; margin-bottom: 10px; display: block; }
-.ad-desc { font-size: 14px; margin-bottom: 10px; display: block; opacity: 0.9; }
-.ad-btn { background: #fbbf24; color: #000; padding: 8px 20px; border-radius: 5px; font-weight: bold; text-transform: uppercase; display: inline-block; margin-top: 10px; }
+.ad-title { font-size: 18px; font-weight: bold; display: block; margin-bottom: 5px; }
+.ad-desc { font-size: 13px; display: block; opacity: 0.9; margin-bottom: 10px; }
+.ad-btn { background: #fbbf24; color: #000; padding: 8px 18px; border-radius: 5px; font-weight: bold; text-transform: uppercase; display: inline-block; font-size: 12px; }
 
-.tool-box{border:2px solid #444; background: #1a1a1a; padding:30px; margin:30px 0; border-radius: 12px;}
-input[type=file]{margin-top:15px; background: #fff; color: #000; padding: 10px; border-radius: 5px; width: 80%;}
-.crop-inputs{display: flex; justify-content: center; gap: 10px; margin: 20px 0; flex-wrap: wrap;}
-.crop-inputs input{width: 80px; padding: 10px; border-radius: 5px; border: none; text-align: center;}
-button{margin-top:20px;padding:15px 30px;font-size:18px;font-weight:bold;background:#16a34a;color:#fff;border:none;cursor:pointer; border-radius: 8px;}
-button:disabled{background: #444; cursor: not-allowed;}
-.message{margin-top:20px;font-weight:bold; font-size: 18px;}
-.home-btn{display:inline-block;margin:20px 10px;padding:12px 26px;background:#444;color:#fff;text-decoration:none;font-weight:bold; border-radius: 8px;}
+/* --- Push Notification --- */
+#push-notification {
+    position: fixed; bottom: -150px; right: 20px; width: 300px; background: #fff; border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: flex; align-items: center; padding: 12px;
+    z-index: 10000; transition: bottom 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55); cursor: pointer; border-left: 5px solid #2563eb; color: #333;
+}
+#push-notification.active { bottom: 20px; }
+#push-notification img { width: 45px; height: 45px; border-radius: 8px; margin-right: 12px; }
+.push-text b { font-size: 14px; color: #222; display: block; }
+.push-text p { font-size: 12px; color: #666; margin: 3px 0 0 0; }
+
+h1{text-align:center; margin:20px; color: #333;}
+#instructions{ width:90%; max-width:600px; margin:10px auto; text-align:center; font-size:14px; color:#555; }
+
+/* --- Tool Components --- */
+#upload-box{
+  border:3px dashed var(--primary); border-radius:12px; padding:30px 20px; text-align:center;
+  width:85%; max-width:400px; cursor:pointer; margin:15px; background: #fff; transition: 0.3s;
+}
+#upload-box:hover{ background:#f5e6fa; transform: scale(1.02); }
+
+#page-selector{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:15px; padding: 10px; }
+.thumbnail{ border:2px solid #ddd; border-radius: 5px; cursor:pointer; transition: 0.2s; background: #fff; padding: 2px; }
+.thumbnail:hover{ border-color: var(--primary); transform: translateY(-3px); }
+
+#crop-viewer{
+  display:none; position:relative; width:100%; max-width:100%; height:85vh;
+  border:1px solid #ccc; margin:10px auto; overflow:auto; background: #555;
+}
+#crop-viewer canvas{ display:block; margin: 0 auto; box-shadow: 0 0 20px rgba(0,0,0,0.3); }
+
+.crop-rect{
+  position:absolute; border:2px dashed var(--primary); background:rgba(147,51,234,0.2); touch-action:none; z-index: 10;
+}
+
+.action-btn{
+  padding:12px 24px; margin:10px; border:none; border-radius:8px; background:var(--primary); color:#fff; cursor:pointer; font-weight: bold;
+}
+#top-buttons{ display:flex; justify-content:center; gap:10px; margin-bottom: 10px; }
+#toast{
+  position:fixed; top:20px; left:50%; transform:translateX(-50%);
+  background:var(--primary); color:#fff; padding:12px 25px; border-radius:8px;
+  display:none; z-index:99999; box-shadow:0 4px 15px rgba(0,0,0,0.3);
+}
 </style>
 </head>
 <body>
 
 <div id="push-notification" onclick="window.open('https://easyusehub.blogspot.com', '_blank')">
-    <span class="close-push" onclick="event.stopPropagation(); document.getElementById('push-notification').classList.remove('active');">&times;</span>
     <img src="https://cdn-icons-png.flaticon.com/512/5968/5968313.png" alt="icon">
     <div class="push-text">
         <b>🚀 46+ Premium Free Tools Ready!</b>
-        <p>ALL PDF TOOLS, Calculators & more at EasyUseHub.</p>
+        <p>PDF Tools, Calculators & more - 100% Free.</p>
     </div>
 </div>
 
-<div class="container">
-  <div class="logo">
-    <img src="https://i.ibb.co.com/WWBzC3V1/file-00000000d63871fdba8af288585dcadb.png" alt="EasyUseHub Logo">
-  </div>
+<h1>📄 PDF Crop Tool</h1>
 
-  <div class="custom-ad-bridge" onclick="window.open('https://easyusehub.blogspot.com', '_blank')">
-      <span class="ad-title">🚀 Try 46+ Premium Free Web Tools!</span>
-      <span class="ad-desc">All PDF TOOLS, 16+ calculator, Age Calculator, BMI Tracker, Loan EMI etc - 100% Free</span>
-      <div class="ad-btn">Open EasyUseHub</div>
-  </div>
-
-  <h1>Crop PDF</h1>
-  <p>Adjust margins (Top, Bottom, Left, Right) to crop your PDF pages. 100% Free & Secure.</p>
-
-  <div class="tool-box">
-    <input type="file" id="pdfFile" accept="application/pdf">
-    
-    <div class="crop-inputs">
-        <div>Top: <input type="number" id="top" value="50"></div>
-        <div>Bottom: <input type="number" id="bottom" value="50"></div>
-        <div>Left: <input type="number" id="left" value="50"></div>
-        <div>Right: <input type="number" id="right" value="50"></div>
-    </div>
-    
-    <button id="cropBtn" onclick="cropPDF()">Crop & Download PDF</button>
-    <div id="msg" class="message"></div>
-  </div>
-
-  <div class="custom-ad-bridge" style="background: linear-gradient(135deg, #059669, #10b981);" onclick="window.open('https://easyusehub.blogspot.com/p/image-compressor.html', '_blank')">
-      <span class="ad-title">⚡ High-Speed Image Compressor</span>
-      <span class="ad-desc">Compress your cropped images without losing quality at EasyUseHub</span>
-      <div class="ad-btn" style="background: #fff; color: #059669;">Try Now</div>
-  </div>
-
-  <div class="custom-ad-bridge" style="background: linear-gradient(135deg, #f59e0b, #d97706);" onclick="window.open('https://easyusehub.blogspot.com/p/ultimate-calculators-hub.html', '_blank')">
-      <span class="ad-title">🔢 Smart Online Calculators</span>
-      <span class="ad-desc">Loan EMI, Age Calculator, BMI Tracker, and Tax Calculators at your fingertips.</span>
-      <div class="ad-btn" style="background: #000; color: #fff;">Open Calculators</div>
-  </div>
-
-  <a href="https://easyusehub.blogspot.com/p/free-pdf-tools-online.html" class="home-btn">📚 All PDF Tools</a>
-  <a href="https://easyusehub.blogspot.com/" class="home-btn">🏠 Home</a>
+<div class="custom-ad-bridge" onclick="window.open('https://easyusehub.blogspot.com', '_blank')">
+    <span class="ad-title">🚀 Try 46+ Premium Free Web Tools!</span>
+    <span class="ad-desc">All PDF TOOLS, Calculators, Age Tracker & more - 100% Free</span>
+    <div class="ad-btn">Open EasyUseHub</div>
 </div>
+
+<div id="top-buttons">
+    <button class="action-btn" style="background:#444;" onclick="window.open('https://easyusehub.blogspot.com/p/free-pdf-tools-online.html','_blank')">📂 All Tools</button>
+    <button class="action-btn" style="background:#444;" onclick="window.open('https://easyusehub.blogspot.com/','_blank')">🏠 Home</button>
+</div>
+
+<div id="instructions">
+  Instructions: Select a page, drag/resize the purple box to crop, then download. (Max 20MB)
+</div>
+
+<div id="upload-box">📁 Click to Upload PDF (Max 20MB)</div>
+<input type="file" id="fileInput" accept="application/pdf" hidden>
+
+<div id="page-selector"></div>
+
+<div id="crop-viewer">
+  <div style="position: sticky; top: 10px; z-index: 100; display: flex; justify-content: center; gap: 10px;">
+    <button id="back-btn" class="action-btn" style="background:#ef4444;">⬅ Back</button>
+    <button id="download-btn" class="action-btn">📥 Download Cropped PDF</button>
+  </div>
+</div>
+
+<div class="custom-ad-bridge" style="background: linear-gradient(135deg, #059669, #10b981);" onclick="window.open('https://easyusehub.blogspot.com/p/image-compressor.html', '_blank')">
+    <span class="ad-title">⚡ High-Speed Image Compressor</span>
+    <span class="ad-desc">Optimize your cropped images for free at EasyUseHub</span>
+    <div class="ad-btn" style="background: #fff; color: #059669;">Try Now</div>
+</div>
+
+<div class="custom-ad-bridge" style="background: linear-gradient(135deg, #f59e0b, #d97706);" onclick="window.open('https://easyusehub.blogspot.com/p/ultimate-calculators-hub.html', '_blank')">
+    <span class="ad-title">🔢 Smart Online Calculators</span>
+    <span class="ad-desc">Loan EMI, Age Calculator & BMI Tracker - Fast & Free</span>
+    <div class="ad-btn" style="background: #000; color: #fff;">Open Calculators</div>
+</div>
+
+<div id="toast">✅ PDF Cropped & Downloaded!</div>
 
 <script>
-async function cropPDF(){
-  const fileInput = document.getElementById('pdfFile');
-  const file = fileInput.files[0];
-  const msg = document.getElementById('msg');
-  const btn = document.getElementById('cropBtn');
+const uploadBox=document.getElementById('upload-box');
+const fileInput=document.getElementById('fileInput');
+const pageSelector=document.getElementById('page-selector');
+const cropViewer=document.getElementById('crop-viewer');
+const backBtn=document.getElementById('back-btn');
+const downloadBtn=document.getElementById('download-btn');
+const toast=document.getElementById('toast');
+
+let pdfDoc=null, pdfBytes=null, currentPage=0, canvas=null, cropRect=null, scale=1;
+
+uploadBox.onclick=()=>fileInput.click();
+
+fileInput.addEventListener('change', async e=>{
+  const file=e.target.files[0];
+  if(!file) return;
+
+  // 20 MB Limit Check
+  if(file.size > 20 * 1024 * 1024) {
+      alert("❌ File is too large! Max limit is 20MB.");
+      fileInput.value = "";
+      return;
+  }
+
+  pdfBytes=await file.arrayBuffer();
+  pdfDoc=await pdfjsLib.getDocument({data:pdfBytes}).promise;
+  pageSelector.innerHTML='<p style="width:100%; color:#666;">Select a page to crop:</p>';
   
-  // ক্রপ মার্জিন ভ্যালু
-  const t = parseFloat(document.getElementById('top').value) || 0;
-  const b = parseFloat(document.getElementById('bottom').value) || 0;
-  const l = parseFloat(document.getElementById('left').value) || 0;
-  const r = parseFloat(document.getElementById('right').value) || 0;
+  uploadBox.style.display = "none";
 
-  if(!file){ msg.innerText="Please select a PDF file."; msg.style.color="#f87171"; return; }
-  if(file.size > 20*1024*1024){ msg.innerText="❌ File exceeds 20 MB limit."; msg.style.color="#f87171"; return; }
-
-  btn.disabled = true;
-  msg.innerText="🔄 Cropping... please wait.";
-  msg.style.color="#fbbf24";
-
-  setTimeout(() => { document.getElementById('push-notification').classList.add('active'); }, 1000);
-
-  try {
-    const arrayBuffer = await file.arrayBuffer();
-    const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
-    const pages = pdfDoc.getPages();
-
-    pages.forEach(page => {
-      const { width, height } = page.getSize();
-      // নতুন বক্স সেট করা (CropBox)
-      page.setCropBox(l, b, width - l - r, height - b - t);
-    });
-
-    const pdfBytes = await pdfDoc.save();
-    const blob = new Blob([pdfBytes], {type:"application/pdf"});
-    const url = URL.createObjectURL(blob);
+  for(let i=1;i<=pdfDoc.numPages;i++){
+    const page = await pdfDoc.getPage(i);
+    const viewport=page.getViewport({scale:0.2});
+    const thumbCanvas=document.createElement('canvas');
+    thumbCanvas.width=viewport.width;
+    thumbCanvas.height=viewport.height;
+    await page.render({canvasContext:thumbCanvas.getContext('2d'),viewport}).promise;
     
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `EasyUseHub-Cropped-${Date.now()}.pdf`;
-    link.click();
+    const thumbDiv=document.createElement('div');
+    thumbDiv.className='thumbnail';
+    thumbDiv.appendChild(thumbCanvas);
+    thumbDiv.onclick=()=>openCropPage(i);
+    pageSelector.appendChild(thumbDiv);
+  }
+});
 
-    msg.innerText="✅ Successfully Cropped!";
-    msg.style.color="#4ade80";
-  } catch (err) {
-    msg.innerText="❌ Processing failed. Check your PDF.";
-    msg.style.color="#f87171";
+async function openCropPage(pageNum){
+  pageSelector.style.display='none';
+  cropViewer.style.display='block';
+  currentPage=pageNum;
+
+  // Clear previous canvas if any
+  const oldCanvas = cropViewer.querySelector('canvas');
+  if(oldCanvas) oldCanvas.remove();
+
+  const page = await pdfDoc.getPage(pageNum);
+  const baseViewport = page.getViewport({scale:1});
+  
+  // Responsive Scale
+  const containerWidth = Math.min(window.innerWidth - 40, 800);
+  scale = containerWidth / baseViewport.width;
+  const viewport = page.getViewport({scale:scale});
+
+  canvas=document.createElement('canvas');
+  canvas.width=viewport.width;
+  canvas.height=viewport.height;
+  await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
+  cropViewer.appendChild(canvas);
+
+  // Initialize Crop Rectangle
+  if(cropRect) cropRect.remove();
+  cropRect=document.createElement('div');
+  cropRect.className='crop-rect';
+  cropRect.style.width='200px';
+  cropRect.style.height='200px';
+  cropRect.style.left=(canvas.offsetLeft + 50) + 'px';
+  cropRect.style.top=(canvas.offsetTop + 50) + 'px';
+  cropViewer.appendChild(cropRect);
+
+  // Activate Push Ad
+  setTimeout(() => { document.getElementById('push-notification').classList.add('active'); }, 1500);
+
+  // Interact.js for Live Crop
+  interact(cropRect)
+    .draggable({
+      listeners: {
+        move(event){
+          const target = event.target;
+          const x = (parseFloat(target.getAttribute('data-x'))||0) + event.dx;
+          const y = (parseFloat(target.getAttribute('data-y'))||0) + event.dy;
+          target.style.transform = `translate(${x}px, ${y}px)`;
+          target.setAttribute('data-x', x);
+          target.setAttribute('data-y', y);
+        }
+      },
+      modifiers: [ interact.modifiers.restrictRect({ restriction: canvas }) ]
+    })
+    .resizable({
+      edges: { left:true, right:true, top:true, bottom:true },
+      listeners: {
+        move(event){
+          let { x, y } = event.target.dataset;
+          x = parseFloat(x) || 0;
+          y = parseFloat(y) || 0;
+          Object.assign(event.target.style, {
+            width: `${event.rect.width}px`,
+            height: `${event.rect.height}px`,
+            transform: `translate(${x + event.deltaRect.left}px, ${y + event.deltaRect.top}px)`
+          });
+          Object.assign(event.target.dataset, { x: x + event.deltaRect.left, y: y + event.deltaRect.top });
+        }
+      },
+      modifiers: [ interact.modifiers.restrictSize({ min: { width: 50, height: 50 } }), interact.modifiers.restrictEdges({ outer: canvas }) ]
+    });
+}
+
+backBtn.onclick=()=>{
+  cropViewer.style.display='none';
+  pageSelector.style.display='flex';
+  const oldCanvas = cropViewer.querySelector('canvas');
+  if(oldCanvas) oldCanvas.remove();
+  if(cropRect) cropRect.remove();
+}
+
+downloadBtn.onclick=async()=>{
+  downloadBtn.disabled = true;
+  downloadBtn.innerText = "Processing...";
+  
+  try {
+    const pdfLibDoc = await PDFLib.PDFDocument.load(pdfBytes);
+    const page = pdfLibDoc.getPage(currentPage-1);
+    
+    const rect = cropRect.getBoundingClientRect();
+    const canvRect = canvas.getBoundingClientRect();
+
+    // Calculate relative coordinates
+    const x = (rect.left - canvRect.left) / scale;
+    const y = (rect.top - canvRect.top) / scale;
+    const w = rect.width / scale;
+    const h = rect.height / scale;
+
+    // pdf-lib logic: y starts from bottom
+    page.setCropBox(x, page.getHeight() - y - h, w, h);
+    
+    const bytes = await pdfLibDoc.save();
+    const blob = new Blob([bytes],{type:'application/pdf'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download=`EasyUseHub_Cropped_${Date.now()}.pdf`;
+    a.click();
+
+    toast.style.display='block';
+    setTimeout(()=>{toast.style.display='none';}, 3000);
+  } catch(e) {
+    alert("Error cropping PDF.");
   } finally {
-    btn.disabled = false;
+    downloadBtn.disabled = false;
+    downloadBtn.innerText = "📥 Download Cropped PDF";
   }
 }
 </script>
